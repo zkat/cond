@@ -1,6 +1,16 @@
 "use strict";
 
 function signal(cond) {
+  if (arguments.length <= 1) {
+    return _signal(cond);
+  } else {
+    return restartCase.apply(
+      this,
+      [function(){return _signal(cond);}].concat([].slice.call(arguments, 1)));
+  }
+}
+
+function _signal(cond) {
   HANDLERS.forEach(function(handlerEntry) {
     if (cond instanceof handlerEntry[0]) {
       handlerEntry[1](cond);
