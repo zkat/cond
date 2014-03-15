@@ -99,7 +99,7 @@ function findRestart(name) {
 /**
  * Invokes the configured debugger.
  */
-function invokeDebugger(condition) {
+function debug(condition) {
   /*****************************************************************/
   /* Welcome to the */ debugger; /* Read below for instructions!!! */
   /*                                                               */
@@ -156,7 +156,7 @@ function formatRestart(entry, i) {
 
 var HANDLERS = [[
   // If we get an error, force falling back into the debugger.
-  Error, invokeDebugger
+  Error, debug
 ]],
     RESTARTS = [];
 
@@ -168,5 +168,5 @@ module.exports = {
   restartCase: restartCase,
   restart: restart,
   findRestart: findRestart,
-  invokeDebugger: invokeDebugger
+  debug: debug
 };
