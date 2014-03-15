@@ -121,6 +121,20 @@ function invokeDebugger(condition) {
     console.log("You have chosen restart: ", name);
     console.log("Unpause the debugger to continue.");
   }
+  function showRestarts() {
+    console.log(
+      (((condition && condition.toString) ? condition.toString() + "\n": "") +
+       "Available restarts: \n" +
+       "\n" +
+       RESTARTS.reduce(function(acc, entry, i) {
+         return acc + formatRestart(entry, i) + "\n";
+       }, "") + "\n" +
+       "To use a restart, use `restart(<name or index>[, arg1[, arg2 ...]])`\n"+
+       "\n" +
+       "Unpause your debugger to continue." +
+       ""));
+  }
+
   if (__chosenRestart != null) {
     _restart.apply(this, __restartArgs);
   } else {
@@ -128,22 +142,11 @@ function invokeDebugger(condition) {
   }
 }
 
-function showRestarts() {
-  console.log(
-    ("Available restarts: \n" +
-     "\n" +
-     RESTARTS.reduce(function(acc, entry, i) {
-       return acc + formatRestart(entry, i) + "\n";
-     }, "") + "\n" +
-     "To use a restart, type `restart(<name or index>[, arg1[, arg2 ...]])` in the console\n" +
-     "\n" +
-     "Unpause your debugger to continue." +
-     ""));
-}
-
 function formatRestart(entry, i) {
   var name = entry[0],
-      description = typeof entry[1] === "string" ? ": "+entry[1] : "";
+      description = (typeof entry[1] === "string" && entry[1].length) ?
+        ": "+entry[1] :
+        "";
   return "["+i+"] "+entry[0]+description;
 }
 
