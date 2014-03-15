@@ -26,9 +26,11 @@ function getIceCream() {
 }
 
 function sayWhatILike() {
-  return "I really really like "+cond.restartCase(function() {
+  var thingILike = cond.restartCase(function() {
     return "mint chocolate chip "+getIceCream();
-  }, ["ice-cream-substitute", function(x) {return x;}]);
+  }, ["substitute-ice-cream", "Provide a substitute for ice cream", function(x) {return x}]);
+
+  return "I really really like "+thingILike;
 }
 
 sayWhatILike();
