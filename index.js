@@ -74,7 +74,10 @@ function restartCase(restartableBody) {
   }
 }
 
-function invokeRestart(name) {
+function restart(name) {
+  return _restart(name);
+}
+function _restart(name) {
   var restart = Array.isArray(name) ? name : findRestart(name),
       restartArgs = [].slice.call(arguments, 1);
   restart[restart.length-1].apply(this, restartArgs);
@@ -111,15 +114,15 @@ function invokeDebugger(condition) {
   /*****************************************************************/
   
   var __chosenRestart,
-      __invokeArgs;
+      __restartArgs;
   function restart(name) {
     __chosenRestart = name;
-    __invokeArgs = arguments;
+    __restartArgs = arguments;
     console.log("You have chosen restart: ", name);
     console.log("Unpause the debugger to continue.");
   }
   if (__chosenRestart != null) {
-    invokeRestart.apply(this, __invokeArgs);
+    _restart.apply(this, __restartArgs);
   } else {
     throw condition;
   }
@@ -160,7 +163,7 @@ module.exports = {
   handlerBind: handlerBind,
   handlerCase: handlerCase,
   restartCase: restartCase,
-  invokeRestart: invokeRestart,
+  restart: restart,
   findRestart: findRestart,
   invokeDebugger: invokeDebugger
 };
