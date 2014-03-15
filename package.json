@@ -21,5 +21,11 @@
   "bugs": {
     "url": "https://github.com/zkat/cond/issues"
   },
-  "homepage": "https://github.com/zkat/cond"
+  "homepage": "https://github.com/zkat/cond",
+  "devDependencies": {
+    "webpack": "^1.1.0-beta8",
+    "grunt": "^0.4.4",
+    "grunt-webpack": "^1.0.5",
+    "grunt-contrib-watch": "^0.6.0"
+  }
 }
