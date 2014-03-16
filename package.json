@@ -28,6 +28,6 @@
     "webpack": "^1.1.0-beta8",
     "grunt": "^0.4.4",
     "grunt-webpack": "^1.0.5",
-    "exec-sync": "^0.1.6"
+    "execSync": "^1.0.1-pre"
   }
 }
