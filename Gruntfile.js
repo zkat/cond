@@ -69,8 +69,8 @@ module.exports = function(grunt) {
   function exec(commands) {
     commands.forEach(function(cmd) {
       var result = sh.exec(cmd);
-      grunt.verbose.write(result.stdout || "");
-      grunt.verbose.write(result.stderr || "");
+      grunt.log.write(result.stdout || "");
+      grunt.log.write(result.stderr || "");
       if (result.code) {
         throw new Error("exit "+result.code);
       }
