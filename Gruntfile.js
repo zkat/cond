@@ -1,6 +1,6 @@
 module.exports = function(grunt) {
   var webpack = require("webpack"),
-      shell = require("exec-sync");
+      sh = require("execSync");
   grunt.loadNpmTasks("grunt-webpack");
   grunt.initConfig({
     webpack: {
@@ -37,16 +37,14 @@ module.exports = function(grunt) {
   grunt.registerTask("build", ["webpack:build-regular", "webpack:build-min"]);
   grunt.registerTask("default", ["build"]);
   grunt.registerTask("update-build", "Commits the built version", function() {
-    [
+    exec([
       "git add ./build",
       "git commit -m 'Updating build files'"
-    ].forEach(function(cmd) {
-      grunt.log.writeln(shell(cmd));
-    });
+    ]);
   });
   grunt.registerTask("tag", "Tag a new release on master", function(type) {
     type = type || "patch";
-    [
+    exec([
       "git remote update",
       "git checkout master",
       "git pull --ff-only",
@@ -54,21 +52,28 @@ module.exports = function(grunt) {
       "git checkout develop",
       "git pull --ff-only",
       "git merge master"
-    ].forEach(function(cmd) {
-      grunt.log.writeln(shell(cmd));
-    });
+    ]);
   });
   grunt.registerTask("release", "Make a release", function(type) {
     grunt.task.run("build", "update-build", "tag"+(type?":"+type:""));
   });
   grunt.registerTask("publish", "Publish to npm and bower", function() {
-    [
+    exec([
       "git push origin develop:develop",
       "git push origin master:master",
       "git push --tags",
       "npm publish ."
-    ].forEach(function(cmd) {
-      grunt.log.writeln(shell(cmd));
-    });
+    ]);
   });
+
+  function exec(commands) {
+    commands.forEach(function(cmd) {
+      var result = sh.exec(cmd);
+      grunt.verbose.write(result.stdout || "");
+      grunt.verbose.write(result.stderr || "");
+      if (result.code) {
+        throw new Error("exit "+result.code);
+      }
+    });
+  }
 };
