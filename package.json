@@ -12,6 +12,8 @@
   },
   "keywords": [
     "conditions",
+    "exceptions",
+    "errors",
     "lisp",
     "restartable-errors",
     "error-handling"
