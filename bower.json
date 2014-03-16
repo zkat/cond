@@ -1,0 +1,17 @@
+{
+  "name": "cond",
+  "version": "0.0.0",
+  "homepage": "https://github.com/zkat/cond",
+  "authors": [
+    "Kat Marchán <kzm@sykosomatic.org>"
+  ],
+  "description": "Restartable error handling system",
+  "main": "./build/cond.js",
+  "keywords": [
+    "conditions",
+    "lisp",
+    "restartable-errors",
+    "error-handling"
+  ],
+  "license": "CC0"
+}
