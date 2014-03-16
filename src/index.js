@@ -1,5 +1,28 @@
 "use strict";
 
+function warn(cond) {
+  arguments[0] = typeof cond === "string" ? new Warning(cond) : cond;
+  return signal.apply(this, arguments);
+}
+
+function Warning() {}
+Warning.prototype = new Error;
+Warning.prototype.constructor = Warning;
+
+function cerror() {
+  return error.apply(this, [
+    arguments[0],
+    ["continue",
+     "Return undefined and continue",
+     function(){}]
+  ].concat([].slice.call(arguments, 1)));
+}
+
+function error(cond) {
+  arguments[0] = typeof cond === "string" ? new Error(cond) : cond;
+  return signal.apply(this, arguments);
+}
+
 function signal(cond) {
   if (arguments.length <= 1) {
     return _signal(cond);
@@ -165,6 +188,7 @@ function formatRestart(entry, i) {
  */
 
 var HANDLERS = [[
+  Warning, function(w) { console.warn(w); },
   // If we get an error, force falling back into the debugger.
   Error, debug
 ]],
@@ -173,6 +197,10 @@ var HANDLERS = [[
 
 module.exports = {
   signal: signal,
+  error: error,
+  cerror: cerror,
+  warn: warn,
+  Warning: Warning,
   handlerBind: handlerBind,
   handlerCase: handlerCase,
   restartCase: restartCase,
