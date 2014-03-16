@@ -1,19 +1,27 @@
 module.exports = function(grunt) {
-  var webpack = require("webpack");
+  var webpack = require("webpack"),
+      shell = require("exec-sync");
   grunt.loadNpmTasks("grunt-webpack");
-  grunt.loadNpmTasks("grunt-contrib-watch");
   grunt.initConfig({
     webpack: {
       options: {
-        entry: "./src/index.js",
         output: {
           library: "cond",
           libraryTarget: "umd",
           path: __dirname + "/build/",
-          filename: "cond.js"
+          filename: "[name].js"
+        },
+        devtool: "#sourcemap"
+      },
+      "build-regular": {
+        entry: {
+          "cond": "./src/index.js"
         }
       },
-      build: {
+      "build-min": {
+        entry: {
+          "cond.min": "./src/index.js"
+        },
         plugins: [
           new webpack.DefinePlugin({
             "process.env": {
@@ -22,32 +30,34 @@ module.exports = function(grunt) {
           }),
           new webpack.optimize.UglifyJsPlugin()
         ]
-      },
-      "build-dev": {
-        devtool: "#sourcemap",
-        debug: true
-      }
-    },
-    watch: {
-      app: {
-        files: ["src/index.js"],
-        tasks: ["webpack:build-dev"],
-        options: {
-          spawn: false
-        }
       }
     }
   });
 
-  // Build and watch cycle (another option for development)
-  // Advantage: No server required, can run app from filesystem
-  // Disadvantage: Requests are not blocked until bundle is available,
-  // can serve an old app on too fast refresh
-  grunt.registerTask("dev", ["webpack:build-dev", "watch:app"]);
-
-  grunt.registerTask("build-dev", ["webpack:build-dev"]);
-  // Production build
-  grunt.registerTask("build", ["webpack:build"]);
-
+  grunt.registerTask("build", ["webpack:build-regular", "webpack:build-min"]);
   grunt.registerTask("default", ["build"]);
+  grunt.registerTask("release", "Tag a new release on master", function(type) {
+    type = type || "patch";
+    [
+      "git remote update",
+      "git checkout master",
+      "git pull --ff-only",
+      "npm version "+type+" -m 'Upgrading to %s'",
+      "git checkout develop",
+      "git pull --ff-only",
+      "git merge master"
+    ].forEach(function(cmd) {
+      grunt.log.writeln(shell(cmd));
+    });
+  });
+  grunt.registerTask("publish", "Publish to npm and bower", function() {
+    [
+      "git push origin develop:develop",
+      "git push origin master:master",
+      "git push --tags",
+      "npm publish ."
+    ].forEach(function(cmd) {
+      grunt.log.writeln(shell(cmd));
+    });
+  });
 };
