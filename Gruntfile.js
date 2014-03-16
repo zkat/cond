@@ -36,7 +36,15 @@ module.exports = function(grunt) {
 
   grunt.registerTask("build", ["webpack:build-regular", "webpack:build-min"]);
   grunt.registerTask("default", ["build"]);
-  grunt.registerTask("release", "Tag a new release on master", function(type) {
+  grunt.registerTask("update-build", "Commits the built version", function() {
+    [
+      "git add ./build",
+      "git commit -m 'Updating build files'"
+    ].forEach(function(cmd) {
+      grunt.log.writeln(shell(cmd));
+    });
+  });
+  grunt.registerTask("tag", "Tag a new release on master", function(type) {
     type = type || "patch";
     [
       "git remote update",
@@ -49,6 +57,9 @@ module.exports = function(grunt) {
     ].forEach(function(cmd) {
       grunt.log.writeln(shell(cmd));
     });
+  });
+  grunt.registerTask("release", "Make a release", function(type) {
+    grunt.task.run("build", "update-build", "tag"+(type?":"+type:""));
   });
   grunt.registerTask("publish", "Publish to npm and bower", function() {
     [
