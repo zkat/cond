@@ -39,7 +39,7 @@ module.exports = function(grunt) {
   grunt.registerTask("update-build", "Commits the built version", function() {
     exec([
       "git add ./build",
-      "git commit -m 'Updating build files'"
+      "git commit --allow-empty -m 'Updating build files'"
     ]);
   });
   grunt.registerTask("tag", "Tag a new release on master", function(type) {
