@@ -46,6 +46,10 @@ console.log("I really like this flavor!");
 // > showRecoveries();
 // > recover(0, "chocolate");
 
+// You can also access recoveries programmatically:
+console.log(cond.handlerBind(function() {
+    return getIceCream("bubblegum");
+}, [Error, function(e) { return cond.recover("add-flavor"); }]));
 ```
 
 # Introduction
