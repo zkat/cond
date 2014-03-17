@@ -140,8 +140,8 @@ function findRecovery(name) {
       if (name === RECOVERIES[i][0]) {
         return RECOVERIES[i];
       }
-      return undefined;
     }
+    return undefined;
   } else {
     return RECOVERIES[name];
   }
