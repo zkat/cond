@@ -27,7 +27,7 @@ function signal(cond) {
   if (arguments.length <= 1) {
     return _signal(cond);
   } else {
-    return restartCase.apply(
+    return recoverable.apply(
       this,
       [function(){return _signal(cond);}].concat([].slice.call(arguments, 1)));
   }
@@ -75,18 +75,18 @@ function handlerCase(handledBody) {
   }
 }
 
-function listRestarts() {
-  // "Deep enough" copy to protect the internal RESTARTS array structure from
+function listRecoveries() {
+  // "Deep enough" copy to protect the internal RECOVERIES array structure from
   // user shenanigans.
-  return RESTARTS.map(function(x) {
+  return RECOVERIES.map(function(x) {
     return x.map(function(x) { return x; });
   });
 }
 
-function restartCase(restartableBody) {
+function recoverable(recoverableBody) {
   var sentinel = {},
-      oldRestarts = RESTARTS,
-      restarts = [].slice.call(arguments, 1).map(function(entry) {
+      oldRecoveries = RECOVERIES,
+      recoveries = [].slice.call(arguments, 1).map(function(entry) {
         var name = entry[0],
             description = typeof entry[1] === "string" ? entry[1] : "",
             callback = description ? entry[2] : entry[1];
@@ -97,8 +97,8 @@ function restartCase(restartableBody) {
         }];
       });
   try {
-    RESTARTS = restarts.concat(RESTARTS);
-    return restartableBody.call(this);
+    RECOVERIES = recoveries.concat(RECOVERIES);
+    return recoverableBody.call(this);
   } catch(e) {
     if (e === sentinel) {
       return sentinel.callback.apply(this, sentinel.args);
@@ -106,29 +106,39 @@ function restartCase(restartableBody) {
       throw e;
     }
   } finally {
-    RESTARTS = oldRestarts;
+    RECOVERIES = oldRecoveries;
   }
 }
 
-function restart(name) {
-  return _restart(name);
+function recover(name) {
+  return _recover.apply(this, arguments);
 }
-function _restart(name) {
-  var restart = Array.isArray(name) ? name : findRestart(name),
-      restartArgs = [].slice.call(arguments, 1);
-  restart[restart.length-1].apply(this, restartArgs);
+function _recover(name) {
+  var recovery = Array.isArray(name) ? name : findRecovery(name),
+      recoveryArgs = [].slice.call(arguments, 1),
+      oldThis = this;
+  if (recovery) {
+    return recovery[recovery.length-1].apply(this, recoveryArgs);
+  } else {
+    return cerror("Recovery not found: "+name, [
+      "try-again", "Call recover() again with a new name", function(x) {
+        return recover.apply(oldThis, recoveryArgs);
+      }
+    ]);
+
+  }
 }
 
-function findRestart(name) {
+function findRecovery(name) {
   if (typeof name === "string") {
-    for (var i = 0; i < RESTARTS.length; i++) {
-      if (name === RESTARTS[i][0]) {
-        return RESTARTS[i];
+    for (var i = 0; i < RECOVERIES.length; i++) {
+      if (name === RECOVERIES[i][0]) {
+        return RECOVERIES[i];
       }
       return undefined;
     }
   } else {
-    return RESTARTS[name];
+    return RECOVERIES[name];
   }
 }
 
@@ -139,46 +149,46 @@ function debug(condition) {
   /*****************************************************************/
   /* Welcome to the */ debugger; /* Read below for instructions!!! */
   /*                                                               */
-  /* Restarts may be available.                                    */
-  /* Call showRestarts() in the JS console to list them.           */
+  /* Recoveries may be available.                                    */
+  /* Call showRecoveries() in the JS console to list them.           */
   /*                                                               */
-  /* If you pick a restart, it will be invoked after you unpause   */
+  /* If you pick a recovery, it will be invoked after you unpause   */
   /* the debugger. Otherwise, `condition` will be thrown.          */
   /*                                                               */
   /*                Thanks for using CondJS!                       */
   /*                                                               */
   /*****************************************************************/
-  
-  var __chosenRestart,
-      __restartArgs;
-  function restart(name) {
-    __chosenRestart = name;
-    __restartArgs = arguments;
-    console.log("You have chosen restart: ", name);
+
+  var __chosenRecovery,
+      __recoveryArgs;
+  function recover(name) {
+    __chosenRecovery = name;
+    __recoveryArgs = arguments;
+    console.log("You have chosen recovery: ", name);
     console.log("Unpause the debugger to continue.");
   }
-  function showRestarts() {
+  function showRecoveries() {
     console.log(
       (((condition && condition.toString) ? condition.toString() + "\n": "") +
-       "Available restarts: \n" +
+       "Available recoveries: \n" +
        "\n" +
-       RESTARTS.reduce(function(acc, entry, i) {
-         return acc + formatRestart(entry, i) + "\n";
+       RECOVERIES.reduce(function(acc, entry, i) {
+         return acc + formatRecovery(entry, i) + "\n";
        }, "") + "\n" +
-       "To use a restart, use `restart(<name or index>[, arg1[, arg2 ...]])`\n"+
+       "To use a recovery: `recover(<name or index>[, arg1[, arg2 ...]])`\n"+
        "\n" +
        "Unpause your debugger to continue." +
        ""));
   }
 
-  if (__chosenRestart != null) {
-    _restart.apply(this, __restartArgs);
+  if (__chosenRecovery != null) {
+    _recover.apply(this, __recoveryArgs);
   } else {
     throw condition;
   }
 }
 
-function formatRestart(entry, i) {
+function formatRecovery(entry, i) {
   var name = entry[0],
       description = (typeof entry[1] === "string" && entry[1].length) ?
         ": "+entry[1] :
@@ -195,7 +205,7 @@ var HANDLERS = [[
   // If we get an error, force falling back into the debugger.
   Error, debug
 ]],
-    RESTARTS = [];
+    RECOVERIES = [];
 
 
 module.exports = {
@@ -206,8 +216,8 @@ module.exports = {
   Warning: Warning,
   handlerBind: handlerBind,
   handlerCase: handlerCase,
-  restartCase: restartCase,
-  restart: restart,
-  findRestart: findRestart,
+  recoverable: recoverable,
+  recover: recover,
+  findRecovery: findRecovery,
   debug: debug
 };
