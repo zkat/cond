@@ -128,7 +128,7 @@ function _recover(name) {
   if (recovery) {
     return recovery[recovery.length-1].apply(this, recoveryArgs);
   } else {
-    return cerror("Recovery not found: "+name, [
+    return error("Recovery not found: "+name, [
       "try-again", "Call recover() again with a new name", function(x) {
         return recover.apply(oldThis, recoveryArgs);
       }
