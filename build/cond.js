@@ -161,7 +161,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      cluster.forEach(function(handlerEntry) {
 	        if (typeof handlerEntry === "function") {
 	          handlerEntry(cond);
-	        } else if (cond instanceof handlerEntry[0]) {
+	        } else if (typeof cond === "object" &&
+	                   cond instanceof handlerEntry[0]) {
 	          handlerEntry[1](cond);
 	        }
 	      });
@@ -188,11 +189,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	function handlerCase(handledBody) {
 	  var sentinel = {},
 	      handlers = [].slice.call(arguments, 1).map(function(handlerEntry) {
-	        return [handlerEntry[0], function(e) {
-	          sentinel.handler = handlerEntry[1];
+	        var isArrayEntry = Array.isArray(handlerEntry),
+	            oldCallback = isArrayEntry ? handlerEntry[1] : handlerEntry;
+	        if (isArrayEntry) {
+	          return [handlerEntry[0], handlerCallback];
+	        } else {
+	          return handlerCallback;
+	        }
+	        function handlerCallback(e) {
+	          sentinel.handler = oldCallback;
 	          sentinel.error = e;
 	          throw sentinel;
-	        }];
+	        };
 	      });
 	  try {
 	    return handlerBind.apply(this, [handledBody].concat(handlers));
