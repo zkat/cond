@@ -13,8 +13,8 @@ function cerror() {
   return error.apply(this, [
     arguments[0],
     ["continue",
-     "Return undefined and continue",
-     function(){}]
+     "Return undefined (or a value) and continue normally",
+     function(x){return x;}]
   ].concat([].slice.call(arguments, 1)));
 }
 
