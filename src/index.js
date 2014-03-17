@@ -34,24 +34,32 @@ function signal(cond) {
 }
 
 function _signal(cond) {
-  HANDLERS.forEach(function(handlerEntry) {
-    if (cond instanceof handlerEntry[0]) {
-      handlerEntry[1](cond);
-    }
-  });
+  var oldClusters = HANDLER_CLUSTERS;
+  try {
+    HANDLER_CLUSTERS.forEach(function(cluster) {
+      HANDLER_CLUSTERS = HANDLER_CLUSTERS.slice(1);
+      cluster.forEach(function(handlerEntry) {
+        if (cond instanceof handlerEntry[0]) {
+          handlerEntry[1](cond);
+        }
+      });
+    });
+  } finally {
+    HANDLER_CLUSTERS = oldClusters;
+  }
 }
 
 function handlerBind(handledBody) {
   var handlers = [].slice.call(arguments, 1),
-      oldHandlers = HANDLERS;
+      oldClusters = HANDLER_CLUSTERS;
   try {
-    HANDLERS = handlers.concat(HANDLERS);
+    HANDLER_CLUSTERS = [handlers].concat(HANDLER_CLUSTERS);
     return handledBody.call(this);
   } catch (e) {
     signal(e);
     throw e;
   } finally {
-    HANDLERS = oldHandlers;
+    HANDLER_CLUSTERS = oldClusters;
   }
 }
 
@@ -98,12 +106,7 @@ function recoverable(recoverableBody) {
       });
   try {
     RECOVERIES = recoveries.concat(RECOVERIES);
-    try {
-      return recoverableBody.call(this);
-    } catch (e) {
-      if (e !== sentinel) { signal(e); }
-      throw e;
-    }
+    return recoverableBody.call(this);
   } catch(e) {
     if (e === sentinel) {
       return sentinel.callback.apply(this, sentinel.args);
@@ -205,11 +208,11 @@ function formatRecovery(entry, i) {
  * Internals
  */
 
-var HANDLERS = [
+var HANDLER_CLUSTERS = [[
   [Warning, function(w) { console.warn(w); }],
   // If we get an error, force falling back into the debugger.
   [Error, debug]
-],
+]],
     RECOVERIES = [];
 
 
