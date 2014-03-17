@@ -57,6 +57,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	"use strict";
 	
+	/**
+	 * Signals a warning condition. By default, warnings do not trigger the
+	 * debugger, but they console.warn the condition.
+	 *
+	 * @param {string|*} condition - The condition to signal. If `condition` is a
+	 *                               string, it will be turned into a Warning and
+	 *                               that warning will be signaled.
+	 * @param {...Array} recoveries - Recoveries to make available. An invoked
+	 *                                recovery will replace the value of the
+	 *                                `warn()` call.
+	 *
+	 * @returns `undefined` or the value of the invoked recovery.
+	 */
 	function warn(cond) {
 	  arguments[0] = typeof cond === "string" ? new Warning(cond) : cond;
 	  return signal.apply(this, arguments);
@@ -66,6 +79,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	Warning.prototype = new Error;
 	Warning.prototype.constructor = Warning;
 	
+	/**
+	 * Signals a continuable error. This function is identical to `error()`, except
+	 * it makes a `"continue"` recovery available. Invoking this recovery will allow
+	 * execution to continue normally. The recovery can optionally be given a value
+	 * that `cerror()` will return.
+	 *
+	 * @param {string|*} condition - The condition to signal. If `condition` is a
+	 *                               string, it will be turned into an Error before
+	 *                               being signaled.
+	 * @param {...Array} recoveries - Recoveries to make available. An invoked
+	 *                                recovery will replace the value of the
+	 *                                `cerror()` call.
+	 *
+	 * @returns The value of the invoked recovery.
+	 */
 	function cerror() {
 	  return error.apply(this, [
 	    arguments[0],
@@ -75,11 +103,46 @@ return /******/ (function(modules) { // webpackBootstrap
 	  ].concat([].slice.call(arguments, 1)));
 	}
 	
+	/**
+	 * Signals an error. Optionally accepts one or more recoveries, which may
+	 * replace the value of the `error()` call.
+	 *
+	 * @param {string|*} condition - The condition to signal. If `condition` is a
+	 *                               string, it will be turned into an Error before
+	 *                               being signaled.
+	 * @param {...Array} recoveries - Recoveries to make available. An invoked
+	 *                                recovery will replace the value of the
+	 *                                `error()` call.
+	 *
+	 * @returns The value of the invoked recovery.
+	 *
+	 * @example
+	 * cond.error("Kaboom");
+	 * cond.error("Something exploded",
+	 *            ["gimme-5", "Just returns 5", function() { return 5; }]);
+	 * cond.error(new CustomError("Goodbye"));
+	 */
 	function error(cond) {
 	  arguments[0] = typeof cond === "string" ? new Error(cond) : cond;
 	  return signal.apply(this, arguments);
 	}
 	
+	/**
+	 * Signals a condition. Optionally accepts one or more recoveries, which may
+	 * replace the value of the `signal()` call.
+	 *
+	 * @param {*} condition - The condition to signal.
+	 * @param {...Array} recoveries - Recoveries to make available. An invoked
+	 *                                recovery will replace the value of the
+	 *                                `signal()` call.
+	 *
+	 * @returns The value of the invoked recovery.
+	 *
+	 * @example
+	 * cond.signal(new InvalidEntry(entry));
+	 * cond.signal(new NotANumberError(num),
+	 *            ["gimme-5", "Just returns 5", function() { return 5; }]);
+	 */
 	function signal(cond) {
 	  if (arguments.length <= 1) {
 	    return _signal(cond);
@@ -96,7 +159,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    HANDLER_CLUSTERS.forEach(function(cluster) {
 	      HANDLER_CLUSTERS = HANDLER_CLUSTERS.slice(1);
 	      cluster.forEach(function(handlerEntry) {
-	        if (cond instanceof handlerEntry[0]) {
+	        if (typeof handlerEntry === "function") {
+	          handlerEntry(cond);
+	        } else if (cond instanceof handlerEntry[0]) {
 	          handlerEntry[1](cond);
 	        }
 	      });
@@ -185,7 +250,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (recovery) {
 	    return recovery[recovery.length-1].apply(this, recoveryArgs);
 	  } else {
-	    return cerror("Recovery not found: "+name, [
+	    return error("Recovery not found: "+name, [
 	      "try-again", "Call recover() again with a new name", function(x) {
 	        return recover.apply(oldThis, recoveryArgs);
 	      }
@@ -214,10 +279,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  /*****************************************************************/
 	  /* Welcome to the */ debugger; /* Read below for instructions!!! */
 	  /*                                                               */
-	  /* Recoveries may be available.                                    */
-	  /* Call showRecoveries() in the JS console to list them.           */
+	  /* Recoveries may be available.                                  */
+	  /* Call showRecoveries() in the JS console to list them.         */
 	  /*                                                               */
-	  /* If you pick a recovery, it will be invoked after you unpause   */
+	  /* If you pick a recovery, it will be invoked after you unpause  */
 	  /* the debugger. Otherwise, `condition` will be thrown.          */
 	  /*                                                               */
 	  /*                Thanks for using CondJS!                       */
@@ -227,10 +292,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var __chosenRecovery,
 	      __recoveryArgs;
 	  function recover(name) {
-	    __chosenRecovery = name;
-	    __recoveryArgs = arguments;
-	    console.log("You have chosen recovery: ", name);
-	    console.log("Unpause the debugger to continue.");
+	    var recovery = findRecovery(name);
+	    if (recovery) {
+	      __chosenRecovery = RECOVERIES.indexOf(recovery);
+	      __recoveryArgs = arguments;
+	      console.log("Selected recovery: ["+__chosenRecovery+"] "+recovery[0]);
+	      console.log("Unpause the debugger to continue.");
+	    } else {
+	      console.log("Invalid recovery: ", name);
+	      console.log("Use showRecoveries() to see a list of available recoveries");
+	    }
 	  }
 	  function showRecoveries() {
 	    console.log(
@@ -267,8 +338,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var HANDLER_CLUSTERS = [[
 	  [Warning, function(w) { console.warn(w); }],
-	  // If we get an error, force falling back into the debugger.
-	  [Error, debug]
+	  // If we get anything else unhandled, force falling back into the debugger.
+	  debug
 	]],
 	    RECOVERIES = [];
 	
