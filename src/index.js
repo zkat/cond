@@ -115,9 +115,36 @@ function _signal(cond) {
   }
 }
 
+/**
+ * Executes `handledBody` in a dynamic context with a set of given handlers
+ * installed. Handlers can either be arrays of `[Constructor, handler]`, or
+ * simply a lone function. In the array form, the handler will be called
+ * whenever a condition is signaled which is `instanceof` that `Constructor`. In
+ * the cases of a solo function handler, the handler will be unconditionally
+ * executed.
+ *
+ * Note that handlerBind handlers do not automatically catch signals. In order
+ * to handle/catch a signal, the handler callback must perform its own non-local
+ * exit from the execution context. To automatically catch when a handler
+ * matches, use `handlerCase()` instead.
+ *
+ * @param {Function} handledBody - Function to execute in a handled dynamic
+ *                                 context.
+ * @param {...Array|Function} handlers - Handlers to execute on matching
+ *                                       signals. Executed first to last.
+ *
+ * @returns The value of `handledBody`.
+ *
+ * @example
+ * cond.handlerBind(function() {
+ *   cond.error("fail");
+ * }, [Error, console.error],
+ *    [Error, function() { console.log("This one, too"); }]);
+ */
 function handlerBind(handledBody) {
   var handlers = [].slice.call(arguments, 1),
       oldClusters = HANDLER_CLUSTERS;
+  // TODO FIXME - for some reason, the example executes both handlers twice.
   try {
     HANDLER_CLUSTERS = [handlers].concat(HANDLER_CLUSTERS);
     return handledBody.call(this);
@@ -129,6 +156,24 @@ function handlerBind(handledBody) {
   }
 }
 
+/**
+ * Executes `handledBody` in a dynamic execution context with a set of handlers
+ * installed. Handlers passed to `handlerCase` will automatically catch/handle
+ * signals, unlike `handlerBind`.
+ *
+ * @param {Function} handledBody - Function to execute in a handled dynamic
+ *                                 context.
+ * @param {...Array|Function} handlers - Handlers to execute on matching
+ *                                       signals. Checked first to last.
+ *
+ * @returns The value of `handledBody`, or the value of a successful handler.
+ *
+ * @example
+ * cond.handlerCase(function() {
+ *   cond.error("fail");
+ * }, [Error, console.error],
+ *    [Error, function() { console.log("This one won't be called"); }]);
+ */
 function handlerCase(handledBody) {
   var sentinel = {},
       handlers = [].slice.call(arguments, 1).map(function(handlerEntry) {
@@ -164,6 +209,30 @@ function listRecoveries() {
   });
 }
 
+/**
+ * Executes `recoverableBody` as a recoverable block. Specified recoveries are
+ * able to execute in the context of the `recoverable()` call, and any value
+ * they return will be used to replace the value of the `recoverabl()` call.
+ *
+ * Usually, this feature is used by calling the `signal` family of
+ * functions. `recoverable()` is mostly useful when wrapping non-`cond` code to
+ * allow calls at your application level to be recoverable.
+ *
+ * @param {Function} recoverableBody - Function to execute.
+ * @param {...Array} recoveries - Zero or more recoveries to be made available.
+ *
+ * @returns Either the return value of `recoverableBody`, if it succeeds, or the
+ *          value returned by any invoked `recoveries` if it signals.
+ *
+ * @example
+ * function someLibraryFunction() {
+ *   throw new Error("I've never heard of CondJS");
+ * }
+ *
+ * cond.recoverable(function() {
+ *   return someLibraryFunction();
+ * }, ["gimme-5", "Return 5", function() { return 5; }]);
+ */
 function recoverable(recoverableBody) {
   var sentinel = {},
       oldRecoveries = RECOVERIES,
@@ -191,9 +260,23 @@ function recoverable(recoverableBody) {
   }
 }
 
+/**
+ * Used within a handler, will invoke a recovery by index, name, or even
+ * directly if it was returned by `findRecovery()`
+ *
+ * @param {number|string|Array} - The recovery to invoke.
+ *
+ * @returns Nothing of value
+ *
+ * @example
+ * cond.handlerBind(function() {
+ *   return cerror("I'm making 'continue' available!");
+ * }, [Error, function(e) { cond.recover("continue"); }]);
+ */
 function recover(name) {
   return _recover.apply(this, arguments);
 }
+
 function _recover(name) {
   var recovery = Array.isArray(name) ? name : findRecovery(name),
       recoveryArgs = [].slice.call(arguments, 1),
@@ -210,6 +293,16 @@ function _recover(name) {
   }
 }
 
+/**
+ * Finds a recovery in the current dynamic context by name or index. The return
+ * value of this function can be passed to `recover()` directly. No assumptions
+ * should be made about the actual structure of the returned object, except that
+ * `undefined` means no such recovery was found.
+ *
+ * @param {number|string} name - The name or index of the recovery.
+ *
+ * @returns {Array|undefined} recovery - The recovery found, or `undefined`.
+ */
 function findRecovery(name) {
   if (typeof name === "string") {
     for (var i = 0; i < RECOVERIES.length; i++) {
