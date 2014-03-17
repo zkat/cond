@@ -1,4 +1,4 @@
-var cond = require("./src");
+var cond = require("../src");
 
 var availableFlavors = ["chocolate", "vanilla", "mint chocolate chip"];
 function getIceCream(flavor) {
@@ -18,6 +18,9 @@ function getIceCream(flavor) {
     }
 }
 
+// NOTE: This will only work if you have access to an interactive JS debugger
+//       configured to break on the debugger statement. If that's not the case,
+//       the script will fail here.
 console.log(getIceCream("coffee"));
 console.log("I really like this flavor!");
 
