@@ -157,10 +157,10 @@ function debug(condition) {
   /*****************************************************************/
   /* Welcome to the */ debugger; /* Read below for instructions!!! */
   /*                                                               */
-  /* Recoveries may be available.                                    */
-  /* Call showRecoveries() in the JS console to list them.           */
+  /* Recoveries may be available.                                  */
+  /* Call showRecoveries() in the JS console to list them.         */
   /*                                                               */
-  /* If you pick a recovery, it will be invoked after you unpause   */
+  /* If you pick a recovery, it will be invoked after you unpause  */
   /* the debugger. Otherwise, `condition` will be thrown.          */
   /*                                                               */
   /*                Thanks for using CondJS!                       */
