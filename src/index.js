@@ -1,5 +1,18 @@
 "use strict";
 
+/**
+ * Signals a warning condition. By default, warnings do not trigger the
+ * debugger, but they console.warn the condition.
+ *
+ * @param {string|*} condition - The condition to signal. If `condition` is a
+ *                               string, it will be turned into a Warning and
+ *                               that warning will be signaled.
+ * @param {...Array} recoveries - Recoveries to make available. An invoked
+ *                                recovery will replace the value of the
+ *                                `warn()` call.
+ *
+ * @returns `undefined` or the value of the invoked recovery.
+ */
 function warn(cond) {
   arguments[0] = typeof cond === "string" ? new Warning(cond) : cond;
   return signal.apply(this, arguments);
@@ -9,6 +22,21 @@ function Warning() {}
 Warning.prototype = new Error;
 Warning.prototype.constructor = Warning;
 
+/**
+ * Signals a continuable error. This function is identical to `error()`, except
+ * it makes a `"continue"` recovery available. Invoking this recovery will allow
+ * execution to continue normally. The recovery can optionally be given a value
+ * that `cerror()` will return.
+ *
+ * @param {string|*} condition - The condition to signal. If `condition` is a
+ *                               string, it will be turned into an Error before
+ *                               being signaled.
+ * @param {...Array} recoveries - Recoveries to make available. An invoked
+ *                                recovery will replace the value of the
+ *                                `cerror()` call.
+ *
+ * @returns The value of the invoked recovery.
+ */
 function cerror() {
   return error.apply(this, [
     arguments[0],
@@ -18,11 +46,46 @@ function cerror() {
   ].concat([].slice.call(arguments, 1)));
 }
 
+/**
+ * Signals an error. Optionally accepts one or more recoveries, which may
+ * replace the value of the `error()` call.
+ *
+ * @param {string|*} condition - The condition to signal. If `condition` is a
+ *                               string, it will be turned into an Error before
+ *                               being signaled.
+ * @param {...Array} recoveries - Recoveries to make available. An invoked
+ *                                recovery will replace the value of the
+ *                                `error()` call.
+ *
+ * @returns The value of the invoked recovery.
+ *
+ * @example
+ * cond.error("Kaboom");
+ * cond.error("Something exploded",
+ *            ["gimme-5", "Just returns 5", function() { return 5; }]);
+ * cond.error(new CustomError("Goodbye"));
+ */
 function error(cond) {
   arguments[0] = typeof cond === "string" ? new Error(cond) : cond;
   return signal.apply(this, arguments);
 }
 
+/**
+ * Signals a condition. Optionally accepts one or more recoveries, which may
+ * replace the value of the `signal()` call.
+ *
+ * @param {*} condition - The condition to signal.
+ * @param {...Array} recoveries - Recoveries to make available. An invoked
+ *                                recovery will replace the value of the
+ *                                `signal()` call.
+ *
+ * @returns The value of the invoked recovery.
+ *
+ * @example
+ * cond.signal(new InvalidEntry(entry));
+ * cond.signal(new NotANumberError(num),
+ *            ["gimme-5", "Just returns 5", function() { return 5; }]);
+ */
 function signal(cond) {
   if (arguments.length <= 1) {
     return _signal(cond);
