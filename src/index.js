@@ -170,10 +170,16 @@ function debug(condition) {
   var __chosenRecovery,
       __recoveryArgs;
   function recover(name) {
-    __chosenRecovery = name;
-    __recoveryArgs = arguments;
-    console.log("You have chosen recovery: ", name);
-    console.log("Unpause the debugger to continue.");
+    var recovery = findRecovery(name);
+    if (recovery) {
+      __chosenRecovery = RECOVERIES.indexOf(recovery);
+      __recoveryArgs = arguments;
+      console.log("Selected recovery: ["+__chosenRecovery+"] "+recovery[0]);
+      console.log("Unpause the debugger to continue.");
+    } else {
+      console.log("Invalid recovery: ", name);
+      console.log("Use showRecoveries() to see a list of available recoveries");
+    }
   }
   function showRecoveries() {
     console.log(
