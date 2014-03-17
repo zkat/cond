@@ -47,6 +47,9 @@ function handlerBind(handledBody) {
   try {
     HANDLERS = handlers.concat(HANDLERS);
     return handledBody.call(this);
+  } catch (e) {
+    signal(e);
+    throw e;
   } finally {
     HANDLERS = oldHandlers;
   }
