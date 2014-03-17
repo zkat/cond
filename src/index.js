@@ -205,11 +205,11 @@ function formatRecovery(entry, i) {
  * Internals
  */
 
-var HANDLERS = [[
-  Warning, function(w) { console.warn(w); },
+var HANDLERS = [
+  [Warning, function(w) { console.warn(w); }],
   // If we get an error, force falling back into the debugger.
-  Error, debug
-]],
+  [Error, debug]
+],
     RECOVERIES = [];
 
 
