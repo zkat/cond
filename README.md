@@ -20,25 +20,31 @@ follow the instructions:
 
 ```javascript
 
-function getIceCream() {
-  // Instead of 'throw', use cond.signal()
-  cond.signal(new Error("There is no ice cream."));
+var availableFlavors = ["chocolate", "vanilla", "mint chocolate chip"];
+function getIceCream(flavor) {
+    if (availableFlavors.indexOf(flavor) !== -1) {
+        return flavor + " ice cream ゲットー!";
+    } else {
+        // Just like throw new Error("something"), but we provide a way
+        // the user can recover from it.
+        return cond.error("Sorry, that flavor is not available", [
+            "different-flavor", "Try a different flavor", getIceCream
+        ], [
+            "add-flavor", "Add this flavor to available ones and retry", function() {
+                availableFlavors.push(flavor);
+                return getIceCream(flavor);
+            }
+        ]);
+    }
 }
 
-function sayWhatILike() {
-  var thingILike = cond.restartCase(function() {
-    return "mint chocolate chip "+getIceCream();
-  }, ["substitute-ice-cream", "Provide a substitute for ice cream", function(x) {return x}]);
-
-  return "I really really like "+thingILike;
-}
-
-sayWhatILike();
+console.log(getIceCream("coffee"));
+console.log("I really like this flavor!");
 
 // In the console, do:
 
-// > showRestarts();
-// > restart(0, "cake");
+// > showRecoveries();
+// > recover(0, "chocolate");
 
 ```
 
