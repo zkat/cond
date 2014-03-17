@@ -102,7 +102,9 @@ function _signal(cond) {
     HANDLER_CLUSTERS.forEach(function(cluster) {
       HANDLER_CLUSTERS = HANDLER_CLUSTERS.slice(1);
       cluster.forEach(function(handlerEntry) {
-        if (cond instanceof handlerEntry[0]) {
+        if (typeof handlerEntry === "function") {
+          handlerEntry(cond);
+        } else if (cond instanceof handlerEntry[0]) {
           handlerEntry[1](cond);
         }
       });
@@ -279,8 +281,8 @@ function formatRecovery(entry, i) {
 
 var HANDLER_CLUSTERS = [[
   [Warning, function(w) { console.warn(w); }],
-  // If we get an error, force falling back into the debugger.
-  [Error, debug]
+  // If we get anything else unhandled, force falling back into the debugger.
+  debug
 ]],
     RECOVERIES = [];
 
