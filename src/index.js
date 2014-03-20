@@ -144,13 +144,9 @@ function _signal(cond) {
 function handlerBind(handledBody) {
   var handlers = [].slice.call(arguments, 1),
       oldClusters = HANDLER_CLUSTERS;
-  // TODO FIXME - for some reason, the example executes both handlers twice.
   try {
     HANDLER_CLUSTERS = [handlers].concat(HANDLER_CLUSTERS);
     return handledBody.call(this);
-  } catch (e) {
-    signal(e);
-    throw e;
   } finally {
     HANDLER_CLUSTERS = oldClusters;
   }
