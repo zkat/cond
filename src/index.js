@@ -379,7 +379,8 @@ function formatRecovery(entry, i) {
 var HANDLER_CLUSTERS = [[
   [Warning, function(w) { console.warn(w); }],
   // If we get anything else unhandled, force falling back into the debugger.
-  debug
+  // Unless it's a warning, which we treat special.
+  function(c) {if (c instanceof Warning) { return; } else { debug(c); }}
 ]],
     RECOVERIES = [];
 
