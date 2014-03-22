@@ -101,18 +101,22 @@ function _signal(cond) {
   try {
     HANDLER_CLUSTERS.forEach(function(cluster) {
       HANDLER_CLUSTERS = HANDLER_CLUSTERS.slice(1);
-      cluster.forEach(function(handlerEntry) {
-        if (typeof handlerEntry === "function") {
-          handlerEntry(cond);
-        } else if (typeof cond === "object" &&
-                   cond instanceof handlerEntry[0]) {
-          handlerEntry[1](cond);
-        }
-      });
+      _signalCluster(cond, cluster);
     });
   } finally {
     HANDLER_CLUSTERS = oldClusters;
   }
+}
+
+function _signalCluster(cond, cluster) {
+  cluster.forEach(function(handlerEntry) {
+    if (typeof handlerEntry === "function") {
+      handlerEntry(cond);
+    } else if (typeof cond === "object" &&
+               cond instanceof handlerEntry[0]) {
+      handlerEntry[1](cond);
+    }
+  });
 }
 
 /**
@@ -143,12 +147,22 @@ function _signal(cond) {
  */
 function handlerBind(handledBody) {
   var handlers = [].slice.call(arguments, 1),
+      oldInHandler = IN_HANDLER_SCOPE,
       oldClusters = HANDLER_CLUSTERS;
   try {
     HANDLER_CLUSTERS = [handlers].concat(HANDLER_CLUSTERS);
+    IN_HANDLER_SCOPE = true;
     return handledBody.call(this);
+  } catch(e) {
+    if (!(e instanceof Sentinel)) {
+      _signalCluster(e, handlers);
+    } else if (e instanceof Sentinel && e.fromDebug) {
+      throw e.condition;
+    }
+    throw e;
   } finally {
     HANDLER_CLUSTERS = oldClusters;
+    IN_HANDLER_SCOPE = oldInHandler;
   }
 }
 
@@ -171,7 +185,7 @@ function handlerBind(handledBody) {
  *    [Error, function() { console.log("This one won't be called"); }]);
  */
 function handlerCase(handledBody) {
-  var sentinel = {},
+  var sentinel = new Sentinel(),
       handlers = [].slice.call(arguments, 1).map(function(handlerEntry) {
         var isArrayEntry = Array.isArray(handlerEntry),
             oldCallback = isArrayEntry ? handlerEntry[1] : handlerEntry;
@@ -230,7 +244,7 @@ function listRecoveries() {
  * }, ["gimme-5", "Return 5", function() { return 5; }]);
  */
 function recoverable(recoverableBody) {
-  var sentinel = {},
+  var sentinel = new Sentinel(),
       oldRecoveries = RECOVERIES,
       recoveries = [].slice.call(arguments, 1).map(function(entry) {
         var name = entry[0],
@@ -359,6 +373,11 @@ function debug(condition) {
 
   if (__chosenRecovery != null) {
     _recover.apply(this, __recoveryArgs);
+  } else if (IN_HANDLER_SCOPE) {
+    var sentinel = new Sentinel();
+    sentinel.condition = condition;
+    sentinel.fromDebug = true;
+    throw sentinel;
   } else {
     throw condition;
   }
@@ -375,6 +394,7 @@ function formatRecovery(entry, i) {
 /*
  * Internals
  */
+function Sentinel() {}
 
 var HANDLER_CLUSTERS = [[
   [Warning, function(w) { console.warn(w); }],
@@ -382,7 +402,8 @@ var HANDLER_CLUSTERS = [[
   // Unless it's a warning, which we treat special.
   function(c) {if (c instanceof Warning) { return; } else { debug(c); }}
 ]],
-    RECOVERIES = [];
+    RECOVERIES = [],
+    IN_HANDLER_SCOPE;
 
 
 module.exports = {
