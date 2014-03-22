@@ -2,7 +2,15 @@ module.exports = function(grunt) {
   var webpack = require("webpack"),
       sh = require("execSync");
   grunt.loadNpmTasks("grunt-webpack");
+  grunt.loadNpmTasks("grunt-mocha-test");
   grunt.initConfig({
+    mochaTest: {
+      test: {
+        src: ["src/test.js"],
+        options: {
+        }
+      }
+    },
     webpack: {
       options: {
         output: {
@@ -34,8 +42,9 @@ module.exports = function(grunt) {
     }
   });
 
+  grunt.registerTask("default", ["test", "build"]);
+  grunt.registerTask("test", ["mochaTest:test"]);
   grunt.registerTask("build", ["webpack:build-regular", "webpack:build-min"]);
-  grunt.registerTask("default", ["build"]);
   grunt.registerTask("update-build", "Commits the built version", function() {
     exec([
       "git add ./build",

@@ -28,6 +28,7 @@
     "webpack": "^1.1.0-beta8",
     "grunt": "^0.4.4",
     "grunt-webpack": "^1.0.5",
-    "execSync": "^1.0.1-pre"
+    "execSync": "^1.0.1-pre",
+    "grunt-mocha-test": "^0.10.0"
   }
 }
