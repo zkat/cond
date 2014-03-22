@@ -156,7 +156,7 @@ function handlerBind(handledBody) {
   } catch(e) {
     if (!(e instanceof Sentinel)) {
       _signalCluster(e, handlers);
-    } else if (e instanceof Sentinel && e.fromDebug) {
+    } else if (e instanceof Sentinel && e.fromDebug && !oldInHandler) {
       throw e.condition;
     }
     throw e;
