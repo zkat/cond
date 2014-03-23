@@ -258,7 +258,15 @@ function recoverable(recoverableBody) {
       });
   try {
     RECOVERIES = recoveries.concat(RECOVERIES);
-    return recoverableBody.call(this);
+    try {
+      return recoverableBody.call(this);
+    } catch(e) {
+      if (!(e instanceof Sentinel)) {
+        return _signal(e);
+      } else {
+        throw e;
+      }
+    }
   } catch(e) {
     if (e === sentinel) {
       return sentinel.callback.apply(this, sentinel.args);
